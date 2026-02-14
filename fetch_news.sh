@@ -22,6 +22,8 @@ FEEDS=(
 N=5
 # Curl timeout (seconds)
 CURL_TIMEOUT=8
+# User-Agent to reduce 403s
+UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
 : > "$OUT_TMP"
 for entry in "${FEEDS[@]}"; do
   name="${entry%%|*}"
@@ -29,10 +31,10 @@ for entry in "${FEEDS[@]}"; do
   echo "${name}:" >> "$OUT_TMP"
   # fetch feed (max time) and extract titles; skip the first <title> (feed title)
   # try to ensure UTF-8 output; if iconv available, normalize
-  if curl -fsS -m $CURL_TIMEOUT --compressed "$url" -o /tmp/news_feed.$$; then
-    # extract title tags safely (simple approach)
-    # remove namespace prefixes, print contents
-    grep -oP '(?<=<title>).*?(?=</title>)' /tmp/news_feed.$$ | sed '1d' | sed 's/^[ \t]*//;s/[ \t]*$//' | head -n $N >> "$OUT_TMP" || true
+  if curl -fsS -m $CURL_TIMEOUT -A "$UA" --compressed "$url" -o /tmp/news_feed.$$; then
+    # extract title tags (skip feed title), trim whitespace
+    sed -n 's/<title>\(.*\)<\/title>/\1/p' /tmp/news_feed.$$ | sed '1d' | sed 's/^[ \t]*//;s/[ \t]*$//' | head -n $N | \
+      python3 -c "import sys,html;print('\n'.join(html.unescape(l.rstrip()) for l in sys.stdin))" >> "$OUT_TMP" || true
     rm -f /tmp/news_feed.$$
   else
     echo "  (failed to fetch)" >> "$OUT_TMP"
