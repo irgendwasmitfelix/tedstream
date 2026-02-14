@@ -35,12 +35,22 @@ try:
     trades.sort(reverse=True)
     for t in trades[:3]:
         info=t[2]
-        ts=info.get('time','')
         pair=info.get('pair','')
         typ=info.get('type','')
         vol=info.get('vol','')
-        price=info.get('price','')
-        print(f"{ts} {pair} {typ} {vol}@{price}")
+        # normalize output: "sell 0.12 xbteur" (type lower, vol 2 decimals, pair lower)
+        try:
+            volf = float(vol)
+            vol_s = f"{volf:.2f}"
+        except Exception:
+            vol_s = vol
+        typ_s = (typ or '').lower()
+        pair_s = (pair or '').lower()
+        if typ_s and vol_s and pair_s:
+            print(f"{typ_s} {vol_s} {pair_s}")
+        else:
+            # fallback to a compact representation
+            print(f"{typ_s} {vol_s} {pair_s}")
 except Exception as e:
     print(f"Error fetching trades: {e}")
     sys.exit(1)
