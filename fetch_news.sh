@@ -76,4 +76,7 @@ if [ -f "$OUT_FILE" ]; then
   fi
 fi
 
+# Escape percent signs for ffmpeg drawtext
+sed -i 's/%/\\%/g' "$TEMP_DIR/news_marquee_line.txt" || true
+
 exit 0
