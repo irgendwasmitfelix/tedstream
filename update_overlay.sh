@@ -48,11 +48,15 @@ while true; do
       PORT_TMP="/tmp/portfolio.$$"
       {
         printf "LAST TRADES:\n"
-        # Mask TXIDs and fetch last 3 trade actions (BUY or SELL)
-        grep -E "BUY|SELL" "$LOG_FILE" | tail -3 | sed -E "s/BUY ORDER SUCCESS: \{'txid': \['[^']*'\]/BUY ORDER SUCCESS: [EXECUTED]/" | sed -E "s/SELL ORDER SUCCESS: \{'txid': \['[^']*'\]/SELL ORDER SUCCESS: [EXECUTED]/" | sed -E 's/.*INFO - //' | sed -E 's/ \| RISK.*$//'
+        # Mask TXIDs and fetch last 3 trade actions
+        grep -E "BUY|SELL|SHORT OPEN SUCCESS" "$LOG_FILE" | tail -3 | \
+        sed -E "s/(BUY ORDER SUCCESS|SELL ORDER SUCCESS|SHORT OPEN SUCCESS): \{'txid'.*/\1: [EXECUTED]/" | \
+        sed -E 's/.*INFO - //' | sed -E 's/ \| RISK.*$//'
         printf -- "----------\n"
-        # Filter noisy system lines and show last 23 log lines
-        grep -vE "Validated trading pairs|Configuration loaded successfully" "$LOG_FILE" | tail -23 2>/dev/null | sed -E 's/ \| RISK.*$//' | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} ([0-9]{2}:[0-9]{2}:[0-9]{2}),[0-9]{3}/\1/' | tac
+        # Filter noisy system lines, mask TXIDs, and show last 23 log lines
+        grep -vE "Validated trading pairs|Configuration loaded successfully" "$LOG_FILE" | \
+        sed -E "s/(BUY ORDER SUCCESS|SELL ORDER SUCCESS|SHORT OPEN SUCCESS): \{'txid'.*/\1: [EXECUTED]/" | \
+        tail -23 2>/dev/null | sed -E 's/ \| RISK.*$//' | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} ([0-9]{2}:[0-9]{2}:[0-9]{2}),[0-9]{3}/\1/' | tac
       } > "$PORT_TMP"
       sed -i 's/%/\\%/g' "$PORT_TMP"
       mv "$PORT_TMP" "$TEMP_DIR/portfolio.txt"
@@ -64,10 +68,11 @@ while true; do
       grep -v '^TOTAL' "/home/felix/youtubestream/balances.txt" | grep -v '^$' | while read -r line; do
         asset=$(echo "$line" | cut -d: -f1); val_str=$(echo "$line" | cut -d: -f2- | sed 's/^[ \t]*//')
         if [[ "$val_str" == *" - "* ]]; then
-           qty=$(echo "$val_str" | cut -d' ' -f1); eur=$(echo "$val_str" | cut -d'-' -f2 | sed 's/EUR//;s/[ \t]*//')
-           printf "%-5s: %12.2f - %8.2f Euro\n" "$asset" "$qty" "$eur"
+           qty=$(echo "$val_str" | cut -d' ' -f1)
+           eur=$(echo "$val_str" | cut -d'-' -f2 | sed 's/EUR//;s/[ \t]*//')
+           printf "%-5s: %.2f - %.2f Euro\n" "$asset" "$qty" "$eur"
         else
-           printf "%-5s: %23.2f Euro\n" "$asset" "$val_str"
+           printf "%-5s: %.2f Euro\n" "$asset" "$val_str"
         fi
       done > "$BAL_TMP"
       T_VAL=$(grep '^TOTAL' "/home/felix/youtubestream/balances.txt" | awk '{print $(NF-1)}')
