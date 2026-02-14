@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# YouTube RTMP Stream - Multi-overlay layout matching screenshot
+# YouTube RTMP Stream - FIXED SETTINGS: 1280x720, 16:9, 2000k, 24fps
 . ./.env
 RTMP_URL="$YOUTUBE_RTMP_URL"
 STREAM_KEY="$YOUTUBE_STREAM_KEY"
@@ -8,6 +8,7 @@ TEMP_DIR="/tmp/youtube_stream"
 
 mkdir -p "$TEMP_DIR"
 
+# STRICT SETTINGS PER USER REQUEST
 VIDEO_SIZE="1280x720"
 FPS="24"
 BITRATE="2000k"
@@ -25,7 +26,7 @@ ffmpeg -re -f lavfi -i color=c=black:s=${VIDEO_SIZE}:r=${FPS} \
   -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:textfile=$TEMP_DIR/header_main_title.txt:reload=1:fontcolor=white:fontsize=20:x=10:y=10, \
        drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:textfile=$TEMP_DIR/status_time.txt:reload=1:fontcolor=0x00FF00:fontsize=20:box=1:boxcolor=black@0.6:boxborderw=6:x=10:y=35, \
        drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:textfile=$TEMP_DIR/status_stats.txt:reload=1:fontcolor=white:fontsize=18:x=10:y=60, \
-       drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:textfile=$TEMP_DIR/portfolio.txt:reload=1:fontcolor=0x00FF00:fontsize=16:x=10:y=90, \
+       drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:textfile=$TEMP_DIR/portfolio.txt:reload=1:fontcolor=0x00FF00:fontsize=16:x=10:y=120, \
        drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:textfile=$TEMP_DIR/header_balances.txt:reload=1:fontcolor=white:fontsize=20:x=950:y=10, \
        drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:textfile=$TEMP_DIR/data_balances.txt:reload=1:fontcolor=white:fontsize=16:x=950:y=35, \
        drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:textfile=$TEMP_DIR/header_movers.txt:reload=1:fontcolor=white:fontsize=20:x=950:y=280, \
