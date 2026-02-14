@@ -43,51 +43,44 @@ while true; do
   # 2. DATA UPDATES (Heavy)
   now=$(date +%s)
   if [ $((now - last_heavy_update)) -ge 2 ]; then
-    # Logs
+    # Logs (Showing last 3 trades and then 23 lines of general log)
     if [ -f "$LOG_FILE" ]; then
       PORT_TMP="/tmp/portfolio.$$"
       {
-        printf "LAST TRADE:\n"
-        LAST_T=$(grep -E "BUY|SELL" "$LOG_FILE" | tail -1 | sed -E 's/.*INFO - //' | sed -E 's/ \| RISK.*$//')
-        printf "%s\n----------\n" "${LAST_T:-None}"
-        grep -vE "Validated trading pairs|Configuration loaded successfully" "$LOG_FILE" | tail -25 2>/dev/null | sed -E 's/ \| RISK.*$//' | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} ([0-9]{2}:[0-9]{2}:[0-9]{2}),[0-9]{3}/\1/' | tac
+        printf "LAST TRADES:\n"
+        # Mask TXIDs and fetch last 3 trade actions (BUY or SELL)
+        grep -E "BUY|SELL" "$LOG_FILE" | tail -3 | sed -E "s/BUY ORDER SUCCESS: \{'txid': \['[^']*'\]/BUY ORDER SUCCESS: [EXECUTED]/" | sed -E "s/SELL ORDER SUCCESS: \{'txid': \['[^']*'\]/SELL ORDER SUCCESS: [EXECUTED]/" | sed -E 's/.*INFO - //' | sed -E 's/ \| RISK.*$//'
+        printf -- "----------\n"
+        # Filter noisy system lines and show last 23 log lines
+        grep -vE "Validated trading pairs|Configuration loaded successfully" "$LOG_FILE" | tail -23 2>/dev/null | sed -E 's/ \| RISK.*$//' | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} ([0-9]{2}:[0-9]{2}:[0-9]{2}),[0-9]{3}/\1/' | tac
       } > "$PORT_TMP"
       sed -i 's/%/\\%/g' "$PORT_TMP"
       mv "$PORT_TMP" "$TEMP_DIR/portfolio.txt"
     fi
 
-    # Balances List (Compact to avoid clipping on right edge)
+    # Balances
     if [ -s "/home/felix/youtubestream/balances.txt" ]; then
       BAL_TMP="/tmp/bal_list.$$"
       grep -v '^TOTAL' "/home/felix/youtubestream/balances.txt" | grep -v '^$' | while read -r line; do
-        asset=$(echo "$line" | cut -d: -f1)
-        val_str=$(echo "$line" | cut -d: -f2- | sed 's/^[ \t]*//')
+        asset=$(echo "$line" | cut -d: -f1); val_str=$(echo "$line" | cut -d: -f2- | sed 's/^[ \t]*//')
         if [[ "$val_str" == *" - "* ]]; then
-           qty=$(echo "$val_str" | cut -d' ' -f1)
-           eur=$(echo "$val_str" | cut -d'-' -f2 | sed 's/EUR//;s/[ \t]*//')
-           printf "%-5s: %.2f - %.2f Euro\n" "$asset" "$qty" "$eur"
+           qty=$(echo "$val_str" | cut -d' ' -f1); eur=$(echo "$val_str" | cut -d'-' -f2 | sed 's/EUR//;s/[ \t]*//')
+           printf "%-5s: %12.2f - %8.2f Euro\n" "$asset" "$qty" "$eur"
         else
-           printf "%-5s: %.2f Euro\n" "$asset" "$val_str"
+           printf "%-5s: %23.2f Euro\n" "$asset" "$val_str"
         fi
       done > "$BAL_TMP"
       T_VAL=$(grep '^TOTAL' "/home/felix/youtubestream/balances.txt" | awk '{print $(NF-1)}')
-      printf "TOTAL: %.2f Euro\n" "$T_VAL" >> "$BAL_TMP"
+      printf "\nTOTAL: %.2f Euro\n" "$T_VAL" >> "$BAL_TMP"
       sed -i 's/%/\\%/g' "$BAL_TMP"
       mv "$BAL_TMP" "$TEMP_DIR/data_balances.txt"
-    fi
-
-    # Movers
-    if [ -s "$TEMP_DIR/top_movers.txt" ]; then
-      sed 's/%/\\%/g' "$TEMP_DIR/top_movers.txt" > "$TEMP_DIR/data_movers.txt"
-    fi
-
-    # Positions
-    POS_TMP="/tmp/pos_list.$$"
-    if [ -s "/home/felix/youtubestream/balances.txt" ]; then
+      
+      # Open Positions Data
+      POS_TMP="/tmp/pos_list.$$"
       grep ' - ' "/home/felix/youtubestream/balances.txt" 2>/dev/null | grep -v ': 0.00000000 -' | awk -F'[: ]+' '{printf "%sEUR: %.2f\n", $1, $2}' > "$POS_TMP"
+      sed -i 's/%/\\%/g' "$POS_TMP"
+      mv "$POS_TMP" "$TEMP_DIR/data_positions.txt"
     fi
-    sed -i 's/%/\\%/g' "$POS_TMP"
-    mv "$POS_TMP" "$TEMP_DIR/data_positions.txt"
 
     # Risk HUD
     RISK_TMP="/tmp/risk_list.$$"
