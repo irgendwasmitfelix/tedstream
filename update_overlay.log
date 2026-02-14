@@ -1,0 +1,20 @@
+nohup: ignoring input
+/home/felix/youtubestream/update_overlay.sh: line 55: : No such file or directory
+/home/felix/youtubestream/update_overlay.sh: line 56: syntax error near unexpected token `fi'
+/home/felix/youtubestream/update_overlay.sh: line 56: `fi'
+/home/felix/youtubestream/update_overlay.sh: line 55: intf: command not found
+/home/felix/youtubestream/update_overlay.sh: line 183: unexpected EOF while looking for matching `"'
+/home/felix/youtubestream/update_overlay.sh: line 158: syntax error near unexpected token `fi'
+/home/felix/youtubestream/update_overlay.sh: line 158: `      fi'
+/home/felix/youtubestream/update_overlay.sh: line 202: unexpected EOF while looking for matching `"'
+mv: cannot stat '/tmp/youtube_stream/news_beincrypto.txt.tmp': No such file or directory
+mv: cannot stat '/tmp/youtube_stream/news_bitcoinmagazine.txt.tmp': No such file or directory
+mv: cannot stat '/tmp/youtube_stream/news_blockworks.txt.tmp': No such file or directory
+/home/felix/youtubestream/update_overlay.sh: line 167: arquee: command not found
+/home/felix/youtubestream/update_overlay.sh: line 200: unexpected EOF while looking for matching `"'
+/home/felix/youtubestream/update_overlay.sh: line 167: ev/null: No such file or directory
+/home/felix/youtubestream/update_overlay.sh: line 169: syntax error near unexpected token `fi'
+/home/felix/youtubestream/update_overlay.sh: line 169: `  fi'
+/home/felix/youtubestream/update_overlay.sh: line 167: continue: only meaningful in a `for', `while', or `until' loop
+/home/felix/youtubestream/update_overlay.sh: line 171: syntax error near unexpected token `done'
+/home/felix/youtubestream/update_overlay.sh: line 171: `    done <<< "$out"'
