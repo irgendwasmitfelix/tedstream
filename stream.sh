@@ -11,7 +11,7 @@ mkdir -p "$TEMP_DIR"
 # STRICT SETTINGS
 VIDEO_SIZE="1280x720"
 FPS="24"
-BITRATE="1500k"
+BITRATE="2000k"
 
 # Ensure all files exist
 for f in header_main_title.txt status_time.txt status_stats.txt news_marquee.txt portfolio.txt header_balances.txt data_balances.txt header_movers.txt data_movers.txt header_positions.txt data_positions.txt header_risk.txt data_risk.txt; do
@@ -36,5 +36,5 @@ ffmpeg -re -f lavfi -i color=c=black:s=${VIDEO_SIZE}:r=${FPS} \
        drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:textfile=$TEMP_DIR/data_risk.txt:reload=1:fontcolor=white:fontsize=14:x=980:y=625, \
        drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf:textfile=$TEMP_DIR/news_marquee.txt:reload=1:fontcolor=white:fontsize=18:x=w-mod(max(t*100\\,0)\\,w+text_w):y=695, \
        scale=1280:720,setsar=1" \
-  -c:v h264_v4l2m2m -b:v ${BITRATE} -maxrate ${BITRATE} -bufsize 3000k \
+  -c:v h264_v4l2m2m -b:v ${BITRATE} -maxrate ${BITRATE} -bufsize 4000k \
   -pix_fmt yuv420p -g 48 -c:a aac -b:a 128k -ar 44100 -f flv "${RTMP_URL}/${STREAM_KEY}"
