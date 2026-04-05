@@ -40,7 +40,8 @@ while true; do
     [ $(echo "$PNL >= 0" | bc -l) -eq 1 ] && LABEL="Profit" || LABEL="Loss"
 
     echo "$(date '+%Y-%m-%d %H:%M:%S')" > "$TEMP_DIR/status_time.txt.tmp" && mv "$TEMP_DIR/status_time.txt.tmp" "$TEMP_DIR/status_time.txt"
-    printf "%s: %+.2f EUR (%+.2f%%)\n" "$LABEL" "$PNL" "$PCT" > "$TEMP_DIR/status_stats.txt.tmp" && mv "$TEMP_DIR/status_stats.txt.tmp" "$TEMP_DIR/status_stats.txt"
+    STATUS_LINE=$(printf "Start: %.2f EUR | Aktuell: %.2f EUR | %+.2f%% | Ziel: %.0f EUR" "$START_BALANCE" "$NOW_EUR" "$PCT" "$TARGET_BALANCE")
+    printf "%s\n" "$STATUS_LINE" | sed 's/%/\\%/g' > "$TEMP_DIR/status_stats.txt.tmp" && mv "$TEMP_DIR/status_stats.txt.tmp" "$TEMP_DIR/status_stats.txt"
     
     last_second=$current_second
   fi
@@ -96,9 +97,16 @@ while true; do
       sed -i 's/%/\\%/g' "$BAL_TMP"
       mv "$BAL_TMP" "$TEMP_DIR/data_balances.txt"
       
-      # Open Positions Data
+      # Open Positions Data — parse POSITION: lines from balances.txt (margin positions)
       POS_TMP="/tmp/pos_list.$$"
-      grep ' - ' "/home/felix/youtubestream/balances.txt" 2>/dev/null | grep -v ': 0.00000000 -' | awk -F'[: ]+' '{printf "%sEUR: %.2f\n", $1, $2}' > "$POS_TMP"
+      grep '^POSITION:' "/home/felix/youtubestream/balances.txt" 2>/dev/null | while read -r line; do
+        # Format: POSITION:SOL SHORT 0.5700 cost:40.00EUR pnl:+0.61EUR
+        info="${line#POSITION:}"
+        printf "%s\n" "$info"
+      done > "$POS_TMP"
+      # Fallback: also include non-zero spot holdings
+      grep ' - ' "/home/felix/youtubestream/balances.txt" 2>/dev/null | grep -v ': 0.00000000 -' | awk -F'[: ]+' '{printf "%s SPOT: %.4f\n", $1, $2}' >> "$POS_TMP"
+      [ ! -s "$POS_TMP" ] && echo "(keine offenen Positionen)" > "$POS_TMP"
       sed -i 's/%/\\%/g' "$POS_TMP"
       mv "$POS_TMP" "$TEMP_DIR/data_positions.txt"
     fi

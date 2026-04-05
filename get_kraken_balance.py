@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
+import krakenex
 sys.path.insert(0, '/home/felix/tradingbot')
-from kraken_interface import KrakenAPI
 import os
 from dotenv import load_dotenv
 
@@ -10,10 +10,24 @@ load_dotenv('/home/felix/tradingbot/.env')
 api_key = os.getenv('KRAKEN_API_KEY')
 api_secret = os.getenv('KRAKEN_API_SECRET')
 
+# Single direct attempt — no retry/backoff (script is called on a schedule anyway)
 try:
-    api = KrakenAPI(api_key, api_secret)
-    balance = api.get_account_balance()
-    
+    api = krakenex.API(api_key, api_secret)
+    response = api.query_private('Balance')
+    errors = response.get('error', [])
+    if errors:
+        print(f"API Error: {errors}", file=sys.stderr)
+        sys.exit(1)
+    balance = response.get('result', {})
+
+    # Get equity including open margin positions (unrealized PnL only, not margin collateral)
+    try:
+        tb = api.query_private('TradeBalance')
+        tb_result = tb.get('result', {})
+        unrealized_pnl = float(tb_result.get('n', 0))  # n = unrealized net P&L on open positions
+    except Exception:
+        unrealized_pnl = 0.0
+
     # Get EUR balance
     eur = float(balance.get('ZEUR', 0))
     total_value_eur = eur
@@ -32,13 +46,13 @@ try:
     prices = {}
     for asset, pair in pairs_to_check.items():
         try:
-            data = api.get_market_data(pair)
-            # The response key might be different from request pair
-            for key in data.keys():
-                if 'c' in data[key]:
-                    prices[asset] = float(data[key]['c'][0])
+            data = api.query_public('Ticker', {'pair': pair})
+            result = data.get('result', {})
+            for key in result.keys():
+                if 'c' in result[key]:
+                    prices[asset] = float(result[key]['c'][0])
                     break
-        except Exception as e:
+        except Exception:
             prices[asset] = 0
     
     print(f"EUR: {eur:.2f}")
@@ -80,8 +94,35 @@ try:
     print(f"LINK: {link:.8f} - {link_value:.2f}EUR")
         
     print("")
-    print(f"TOTAL: {total_value_eur:.2f} EUR")
-    
+    # Total = spot EUR + unrealized P&L from open margin positions
+    total_display = total_value_eur + unrealized_pnl
+    print(f"TOTAL: {total_display:.2f} EUR")
+
+    # Open margin positions (SHORT/LONG) — not reflected in spot balance
+    try:
+        import time; time.sleep(0.5)
+        op = api.query_private('OpenPositions')
+        positions = op.get('result', {})
+        if positions:
+            print("")
+            for pos_id, p in positions.items():
+                pair = p.get('pair', '').replace('EUR', '').replace('ZEUR', '')
+                direction = 'LONG' if p.get('type') == 'buy' else 'SHORT'
+                vol = float(p.get('vol', 0))
+                cost = float(p.get('cost', 0))
+                # current price for this asset
+                asset_key = pair if pair in prices else None
+                if asset_key:
+                    current_val = vol * prices[asset_key]
+                    pnl = (cost - current_val) if direction == 'SHORT' else (current_val - cost)
+                else:
+                    current_val = cost
+                    pnl = 0.0
+                sign = '+' if pnl >= 0 else ''
+                print(f"POSITION:{pair} {direction} {vol:.4f} cost:{cost:.2f}EUR pnl:{sign}{pnl:.2f}EUR")
+    except Exception:
+        pass
+
 except Exception as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)

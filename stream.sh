@@ -16,12 +16,13 @@ BITRATE="2000k"
 BUF_SIZE="8000k"
 
 # Ensure all files exist
-for f in header_main_title.txt status_time.txt status_stats.txt news_marquee.txt news_marquee_line.txt portfolio.txt header_balances.txt data_balances.txt header_movers.txt data_movers.txt header_positions.txt data_positions.txt data_risk.txt; do
+for f in header_main_title.txt status_time.txt status_stats.txt status_profit.txt status_loss.txt news_marquee.txt news_marquee_line.txt portfolio.txt header_balances.txt data_balances.txt header_movers.txt data_movers.txt header_positions.txt data_positions.txt data_risk.txt; do
   touch "$TEMP_DIR/$f"
 done
 
-# Start ffmpeg with hardware acceleration (h264_v4l2m2m)
-# Increased bufsize to better handle network jitter
+# Reconnect loop: restart ffmpeg automatically on connection loss
+while true; do
+
 ffmpeg -re -f lavfi -i "color=c=black:s=${VIDEO_SIZE}:r=${FPS}" \
   -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
   -vf "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:textfile=$TEMP_DIR/header_main_title.txt:reload=1:fontcolor=white:fontsize=20:x=10:y=10, \
@@ -39,3 +40,7 @@ ffmpeg -re -f lavfi -i "color=c=black:s=${VIDEO_SIZE}:r=${FPS}" \
        scale=1280:720" \
   -c:v libx264 -preset ultrafast -tune zerolatency -b:v ${BITRATE} -maxrate ${BITRATE} -bufsize ${BUF_SIZE} -g 48 \
   -pix_fmt yuv420p -c:a aac -b:a 128k -ar 44100 -f flv "${RTMP_URL}/${STREAM_KEY}"
+
+  echo "[stream.sh] ffmpeg exited with code $?, reconnecting in 5s..."
+  sleep 5
+done
