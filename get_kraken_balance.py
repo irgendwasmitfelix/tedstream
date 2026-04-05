@@ -106,20 +106,20 @@ try:
         if positions:
             print("")
             for pos_id, p in positions.items():
-                pair = p.get('pair', '').replace('EUR', '').replace('ZEUR', '')
+                raw_pair = p.get('pair', '')
+                # Clean pair name for display: XXBTZEUR→BTC, XETHZEUR→ETH, SOLEUR→SOL etc.
+                display = raw_pair.replace('XXBT', 'BTC').replace('XETH', 'ETH').replace('XXRP', 'XRP').replace('ZEUR', '').replace('EUR', '')
                 direction = 'LONG' if p.get('type') == 'buy' else 'SHORT'
                 vol = float(p.get('vol', 0))
                 cost = float(p.get('cost', 0))
-                # current price for this asset
-                asset_key = pair if pair in prices else None
+                asset_key = raw_pair.replace('ZEUR', '').replace('EUR', '') if raw_pair.replace('ZEUR', '').replace('EUR', '') in prices else None
                 if asset_key:
                     current_val = vol * prices[asset_key]
                     pnl = (cost - current_val) if direction == 'SHORT' else (current_val - cost)
                 else:
-                    current_val = cost
                     pnl = 0.0
-                sign = '+' if pnl >= 0 else ''
-                print(f"POSITION:{pair} {direction} {vol:.4f} cost:{cost:.2f}EUR pnl:{sign}{pnl:.2f}EUR")
+                arrow = '▲' if pnl >= 0 else '▼'
+                print(f"POSITION:{display} {direction} {vol:.4f} | {arrow} {pnl:+.2f} EUR")
     except Exception:
         pass
 
