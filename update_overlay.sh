@@ -44,7 +44,7 @@ while true; do
       PORT_TMP="/tmp/portfolio.$$"
       {
         printf "LAST TRADES:\n"
-        # Fetch last 3 trades via API (max every 5 minutes to avoid rate limiting)
+        # Fetch last 3 trades via API (max every 2 minutes to avoid rate limiting)
         VENV_PY="$BOT_DIR/venv/bin/python3"
         if [ $((now - last_trades_update)) -ge 120 ]; then
           if [ -x "$VENV_PY" ]; then
@@ -54,13 +54,13 @@ while true; do
           fi
           last_trades_update=$now
         fi
-        [ -f /tmp/recent_trades.$$ ] && tail -n 3 /tmp/recent_trades.$$ | sed -e "s/^/\t/" || true
+        [ -f /tmp/recent_trades.$$ ] && tail -n 3 /tmp/recent_trades.$$ | sed -e 's/^/  /' || printf "  (keine frischen Trades)\n"
         printf -- "----------\n"
-        # Filter noisy system lines, mask TXIDs, and show last 23 log lines
-        grep -vE "Validated trading pairs|Configuration loaded successfully|Loaded [0-9]+ trades from" "$LOG_FILE" | \
-        sed -E "s/'txid': '[^']+'/'txid': [REDACTED]/g" | \
-        /home/felix/youtubestream/format_trade_line.py | \
-        tail -23 2>/dev/null | sed -E 's/ \| RISK.*$//' | sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} ([0-9]{2}:[0-9]{2}:[0-9]{2}),[0-9]{3}/\1/' | tac
+        # Show the latest real bot log lines with minimal transformation.
+        grep -a -vE "Validated trading pairs|Configuration loaded successfully|Loaded [0-9]+ trades from|Pair normalized:" "$LOG_FILE" | \
+          tail -n 23 | \
+          sed -E "s/'txid': '[^']+'/'txid': [REDACTED]/g" | \
+          sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} ([0-9]{2}:[0-9]{2}:[0-9]{2}),[0-9]{3} - /\1 /'
       } > "$PORT_TMP"
       sed -i 's/%/\\%/g' "$PORT_TMP"
       mv "$PORT_TMP" "$TEMP_DIR/portfolio.txt"
