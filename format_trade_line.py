@@ -47,8 +47,10 @@ def format_line(line):
                 vol_s = f"{volf:.2f}"
             except Exception:
                 vol_s = vol
-            # return without '@ market'
-            return f"{typ} {vol_s} {pair}"
+            # preserve parenthetical info (e.g. "(SELL)") if present in the original order text
+            p = re.search(r"(\([^)]*\))", order)
+            paren = (' ' + p.group(0)) if p else ''
+            return f"{typ} {vol_s} {pair}{paren}"
         # if it doesn't match, just return the trimmed order
         return round_floats_to_2(order)
     # fallback: try to find inline order text like "sell 0.21968 SOLEUR @ market"
@@ -68,7 +70,10 @@ def format_line(line):
                 vol_s = f"{volf:.2f}"
             except Exception:
                 vol_s = vol
-            return f"{typ} {vol_s} {pair}"
+            # preserve parenthetical info from the candidate text if present
+            p = re.search(r"(\([^)]*\))", candidate)
+            paren = (' ' + p.group(0)) if p else ''
+            return f"{typ} {vol_s} {pair}{paren}"
         return round_floats_to_2(candidate)
     # fallback: find buy/sell and first numeric volume and pair
     m2 = re.search(r"\b(buy|sell)\b\s*([0-9]+(?:\.[0-9]+)?)\s*([A-Za-z/]+)", line, re.IGNORECASE)
@@ -81,7 +86,10 @@ def format_line(line):
             vol_s = f"{volf:.2f}"
         except Exception:
             vol_s = vol
-        return f"{typ} {vol_s} {pair}"
+        # preserve parenthetical info from the original line if present
+        p = re.search(r"(\([^)]*\))", line)
+        paren = (' ' + p.group(0)) if p else ''
+        return f"{typ} {vol_s} {pair}{paren}"
     # otherwise, remove descr blocks and return trimmed line without keys
     line = re.sub(r"descr\s*:\s*\{[^}]*\}", "", line)
     line = re.sub(r"\s+", " ", line).strip()

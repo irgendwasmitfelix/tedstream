@@ -46,11 +46,22 @@ try:
             vol_s = vol
         typ_s = (typ or '').lower()
         pair_s = (pair or '').lower()
-        if typ_s and vol_s and pair_s:
-            print(f"{typ_s} {vol_s} {pair_s}")
-        else:
-            # fallback to a compact representation
-            print(f"{typ_s} {vol_s} {pair_s}")
+        # try to preserve parenthetical/extra info from the 'descr' field if present
+        paren = ''
+        descr = info.get('descr', '')
+        try:
+            # descr may be a dict with an 'order' key
+            if isinstance(descr, dict):
+                order_txt = descr.get('order', '')
+            else:
+                order_txt = str(descr)
+            import re as _re
+            m_paren = _re.search(r"(\([^)]*\))", order_txt)
+            if m_paren:
+                paren = ' ' + m_paren.group(0)
+        except Exception:
+            paren = ''
+        print(f"{typ_s} {vol_s} {pair_s}{paren}")
 except Exception as e:
     print(f"Error fetching trades: {e}")
     sys.exit(1)

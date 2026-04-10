@@ -60,6 +60,7 @@ while true; do
         grep -a -vE "Validated trading pairs|Configuration loaded successfully|Loaded [0-9]+ trades from|Pair normalized:" "$LOG_FILE" | \
           tail -n 23 | \
           tac | \
+          sed -E "s/\s*[|] *[Bb]al.*$//" | \
           sed -E "s/'txid': '[^']+'/'txid': [REDACTED]/g" | \
           sed -E 's/^[0-9]{4}-[0-9]{2}-[0-9]{2} ([0-9]{2}:[0-9]{2}:[0-9]{2}),[0-9]{3} - /\1 /'
       } > "$PORT_TMP"
