@@ -112,9 +112,9 @@ while true; do
 
     # Risk HUD - only show Trades (Mode removed)
     RISK_TMP="/tmp/risk_list.$$"
-    NAS_TRADES=$(grep -oE 'Loaded [0-9]+ trades from' "$LOG_FILE" 2>/dev/null | tail -1 | grep -oE '[0-9]+' || echo 0)
-[ -z "$NAS_TRADES" ] && NAS_TRADES=0
-printf "Trades: %s\n" "$NAS_TRADES" > "$RISK_TMP"
+    # Read the number of elements in /mnt/fritz_nas/Volume/kraken/trades_2026.json only (flat list)
+TRADES_COUNT=$(jq length /mnt/fritz_nas/Volume/kraken/trades_2026.json 2>/dev/null || echo 0)
+printf "Trades: %s\n" "$TRADES_COUNT" > "$RISK_TMP"
 sed -i 's/%/\%/g' "$RISK_TMP"
 mv "$RISK_TMP" "$TEMP_DIR/data_risk.txt"
 
