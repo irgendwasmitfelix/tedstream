@@ -112,13 +112,18 @@ while true; do
 
     # Risk HUD - only show Trades (Mode removed)
     RISK_TMP="/tmp/risk_list.$$"
-    # Read the number of elements in /mnt/fritz_nas/Volume/kraken/trades_2026.json only (flat list)
-TRADES_COUNT=$(jq length /mnt/fritz_nas/Volume/kraken/trades_2026.json 2>/dev/null || echo 0)
-printf "Trades: %s\n" "$TRADES_COUNT" > "$RISK_TMP"
-sed -i 's/%/\%/g' "$RISK_TMP"
-mv "$RISK_TMP" "$TEMP_DIR/data_risk.txt"
+    # Prefer local trade journal for up-to-date counts; fallback to NAS cache JSON
+    if [ -f "$BOT_DIR/reports/trade_journal.csv" ]; then
+      # exclude header
+      TRADES_COUNT=$(tail -n +2 "$BOT_DIR/reports/trade_journal.csv" | wc -l | tr -d '[:space:]' || echo 0)
+    else
+      TRADES_COUNT=$(jq length /mnt/fritz_nas/Volume/kraken/trades_2026.json 2>/dev/null || echo 0)
+    fi
+    printf "Trades: %s\n" "$TRADES_COUNT" > "$RISK_TMP"
+    sed -i 's/%/\\%/g' "$RISK_TMP"
+    mv "$RISK_TMP" "$TEMP_DIR/data_risk.txt"
 
-last_heavy_update=$now
+    last_heavy_update=$now
   fi
 
   # 3. BACKGROUND FETCH
