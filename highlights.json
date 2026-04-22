@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-04-22T17:49:04.675653",
+  "selected": [
+    {
+      "file": "podcast_short1.mp4",
+      "duration_s": 60.0,
+      "score": "10.0",
+      "size_bytes": 6606029,
+      "thumb": "podcast_short1_thumb.jpg",
+      "path": "../../../../mnt/fritz_nas/Volume/VideoRaspyExport/highlights/podcast_short1.mp4"
+    },
+    {
+      "file": "podcast_short3.mp4",
+      "duration_s": 30.0,
+      "score": "10.0",
+      "size_bytes": 2712866,
+      "thumb": "podcast_short3_thumb.jpg",
+      "path": "../../../../mnt/fritz_nas/Volume/VideoRaspyExport/highlights/podcast_short3.mp4"
+    },
+    {
+      "file": "podcast_short4.mp4",
+      "duration_s": 30.0,
+      "score": "10.0",
+      "size_bytes": 2618315,
+      "thumb": "podcast_short4_thumb.jpg",
+      "path": "../../../../mnt/fritz_nas/Volume/VideoRaspyExport/highlights/podcast_short4.mp4"
+    }
+  ]
+}
